@@ -1,0 +1,3 @@
+# Source only. Provisioning must verify Bolt auth/JWT compatibility; handler getUser remains mandatory.
+[functions.propose-fix]
+verify_jwt = true

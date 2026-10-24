@@ -1,4 +1,5 @@
-// Activation-only offline eval. Does not generate/fetch fixtures, provision a database or call a paid provider.
+// Activation eval: offline by default; llm-A uses only the authenticated, server-budgeted edge route.
+// Never generates/fetches fixtures or provisions a database. No provider keys or password files/env are read.
 import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { resolve, relative, sep, isAbsolute } from "node:path";
@@ -21,6 +22,12 @@ import { auditBaselineTwice } from "../src/node/baseline.ts";
 import { judgeGoldDefect } from "../src/node/oracle.ts";
 import type { ResultRow } from "../src/node/resultsSchema.ts";
 import { ResultRowSchema, parseResultsJsonl, resultsMarkdown, failuresMarkdown } from "../src/node/resultsSchema.ts";
+import { openOperatorSession } from "../src/node/operatorSession.ts";
+import type { OperatorSession } from "../src/node/operatorSession.ts";
+import { EvalCheckpoint, createCheckpointTransport, deterministicAttemptId } from "../src/node/evalCheckpoint.ts";
+import { FsLedger } from "../src/node/fsLedger.ts";
+import { createRemoteProposer } from "../src/core/proposers/remote.ts";
+import { METHODS } from "../src/shared/providerConfig.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const hash = (text: string): string => createHash("sha256").update(text, "utf8").digest("hex");
@@ -50,11 +57,16 @@ function applyFix(row: ResultRow, fix: FixResult, oracle: (attempt: FixAttempt) 
 }
 async function evaluatePage<D extends { rule: RuleId; ordinal: number | null }>(source: string, file: string, rows: ResultRow[], defects: readonly D[],
   makeRow: (defect: D) => ResultRow, proposer: typeof rulesProposer,
-  judge: (defect: D, attempt: FixAttempt) => boolean | null, profileText: string): Promise<void> {
+  judge: (defect: D, attempt: FixAttempt) => boolean | null, profileText: string,
+  hooks: { shouldStop?: () => boolean; costFor?: (fix: FixResult) => number | null } = {}): Promise<void> {
   const page = parsePage(source); const engine = createJsdomEngine({ source: page, file });
   const render = (text: string, insertedTitleStart: number | null) => buildRenderCopy(text, { insertedTitleStart }).html;
   const rendered = render(source, null); const stability = await auditBaselineTwice(engine, rendered);
   for (const defect of defects) {
+    if (hooks.shouldStop?.() === true) {
+      const row = makeRow(defect); row.firstPass.reasons = ["run_stopped_budget_exceeded"]; row.afterRetry.reasons = ["run_stopped_budget_exceeded"];
+      rows.push(ResultRowSchema.parse(row)); continue;
+    }
     const baseline = stability.first;
     let row: ResultRow = { ...makeRow(defect), measurement: "measured", baselineStable: stability.stable,
       renderSha256: hash(rendered), engineProfileSha256: hash(profileText), engine: baseline?.engine ?? null, engineProfile: baseline?.profile ?? null, axeVersion: baseline?.axeVersion ?? null };
@@ -66,7 +78,11 @@ async function evaluatePage<D extends { rule: RuleId; ordinal: number | null }>(
       const detected = target !== undefined && !baseline.notMeasured.includes(defect.rule);
       row = { ...row, baselineDetected: detected, eligible: detected, firstPass: { ...row.firstPass, state: baseline.notMeasured.includes(defect.rule) ? "not_measured" : "not_attempted", reasons: [baseline.notMeasured.includes(defect.rule) ? "target_not_measured" : "baseline_did_not_detect_target"] },
         afterRetry: { ...row.afterRetry, state: baseline.notMeasured.includes(defect.rule) ? "not_measured" : "not_attempted", reasons: [baseline.notMeasured.includes(defect.rule) ? "target_not_measured" : "baseline_did_not_detect_target"] } };
-      if (detected && target !== undefined) row = applyFix(row, await runFix({ page, finding: target, baseline, engine, proposer, render, file }), (attempt) => judge(defect, attempt));
+      if (detected && target !== undefined) {
+        const fix = await runFix({ page, finding: target, baseline, engine, proposer, render, file });
+        row = applyFix(row, fix, (attempt) => judge(defect, attempt));
+        if (hooks.costFor !== undefined) row.costUsdMicros = hooks.costFor(fix);
+      }
     }
     rows.push(ResultRowSchema.parse(row));
   }
@@ -75,6 +91,17 @@ async function main(): Promise<void> {
   const option = process.argv.indexOf("--proposers"); const selected = (option < 0 ? "rules,mock" : process.argv[option + 1] ?? "").split(",").filter(Boolean);
   if (selected.length === 0 || new Set(selected).size !== selected.length || selected.some((id) => !["rules", "mock", "llm-A", "llm-B", "jev"].includes(id))) throw new Error("invalid_proposer_allowlist");
   const rows: ResultRow[] = []; const profileText = await readFile(repoFile("engine-profile.json"), "utf8");
+  let operator: OperatorSession | null = null;
+  let live: { session: OperatorSession; transport: ReturnType<typeof createCheckpointTransport>; ledger: FsLedger; runKey: string } | null = null;
+  if (selected.includes("llm-A")) {
+    const index = process.argv.indexOf("--run-key"); const runKey = index < 0 ? undefined : process.argv[index + 1];
+    if (runKey === undefined || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$/.test(runKey)) throw new Error("llm-A requires --run-key <owner-precreated-eval-budget-key>");
+    operator = await openOperatorSession();
+    const checkpoint = new EvalCheckpoint(repoFile(`results/eval-checkpoint-${runKey}.jsonl`)); const ledger = new FsLedger(repoFile("results/callledger.jsonl"));
+    try { await checkpoint.load(); await ledger.load(); } catch (error) { await operator.close(); throw error; }
+    live = { session: operator, transport: createCheckpointTransport({ session: operator, checkpoint, ledger }), ledger, runKey };
+  }
+  try {
   if (selected.some((id) => id !== "mock")) {
     const manifest = ManifestSchema.parse(JSON.parse(await readFile(repoFile("fixtures/MANIFEST.json"), "utf8")) as unknown);
     if (["id", "file", "oracleFile"].some((key) => new Set(manifest.pages.map((page) => page[key as "id" | "file" | "oracleFile"])).size !== 40)) throw new Error("duplicate_fixture_identity");
@@ -88,9 +115,25 @@ async function main(): Promise<void> {
         new Set(gold.defects.map((defect) => `${defect.rule}:${defect.ordinal}`)).size !== gold.defects.length) throw new Error("fixture_oracle_manifest_mismatch");
       for (const proposer of selected.filter((id) => id !== "mock")) {
         const make = (defect: { rule: RuleId; ordinal: number | null }) => blank("heldout", item.id, item.family, defect.rule, defect.ordinal, proposer, source);
-        if (proposer !== "rules") { rows.push(...gold.defects.map((defect) => ResultRowSchema.parse(make(defect)))); continue; }
+        if (proposer !== "rules" && proposer !== "llm-A") { rows.push(...gold.defects.map((defect) => ResultRowSchema.parse(make(defect)))); continue; }
         const original = parsePage(source);
-        await evaluatePage(source, item.file, rows, gold.defects, make, rulesProposer,
+        if (proposer === "llm-A" && live !== null) {
+          const connection = live;
+          if (connection.transport.isStopped()) {
+            rows.push(...gold.defects.map((defect) => { const row = make(defect); row.firstPass.reasons = ["run_stopped_budget_exceeded"]; row.afterRetry.reasons = ["run_stopped_budget_exceeded"]; return ResultRowSchema.parse(row); })); continue;
+          }
+          const ids = new Map<string, string[]>();
+          const profile = JSON.parse(profileText) as { engines: { jsdom: { profileId: string } } };
+          const remote = createRemoteProposer({ proposer: "llm-A", runKey: connection.runKey, invoke: connection.transport.invoke,
+            async attemptId(finding, attempt) {
+              const id = await deterministicAttemptId({ uid: connection.session.userId, runKey: connection.runKey, sourceSha256: hash(source),
+                engineProfile: `${profile.engines.jsdom.profileId}:${hash(profileText)}`, fingerprint: finding.fingerprint ?? "unmapped", proposer: "llm-A", model: METHODS["llm-A"].model, attempt });
+              ids.set(finding.fingerprint ?? "unmapped", [...(ids.get(finding.fingerprint ?? "unmapped") ?? []), id]); return id;
+            } });
+          await evaluatePage(source, item.file, rows, gold.defects, make, remote,
+            (defect, attempt) => judgeGoldDefect(original, defect, attempt).correct, profileText,
+            { shouldStop: connection.transport.isStopped, costFor: (fix) => connection.ledger.costFor(ids.get(fix.finding.fingerprint ?? "unmapped") ?? []) });
+        } else await evaluatePage(source, item.file, rows, gold.defects, make, rulesProposer,
           (defect, attempt) => judgeGoldDefect(original, defect, attempt).correct, profileText);
       }
     }
@@ -110,6 +153,7 @@ async function main(): Promise<void> {
   const saved = parseResultsJsonl(await readFile(repoFile("results/results.jsonl"), "utf8"));
   await writeFile(repoFile("results/results.md"), resultsMarkdown(saved), "utf8");
   await writeFile(repoFile("results/failures.md"), failuresMarkdown(saved), "utf8");
-  console.log(`Saved ${saved.length} result rows. ACT remains a separate unmeasured table until its explicit M8 runner; remote proposers remain not measured until M6/M8 wiring.`);
+  console.log(`Saved ${saved.length} result rows. ACT/llm-B/Jev remain not measured until M8. Live llm-A uses only the server eval_run budget route; unavailable cost remains null.${live?.transport.isStopped() === true ? " Paid run stopped: budget_exceeded; remaining rows are explicitly not measured." : ""}`);
+  } finally { await operator?.close(); }
 }
 void main().catch((error: unknown) => { console.error(error instanceof Error ? error.message : "eval_failed"); process.exitCode = 1; });

@@ -1,29 +1,15 @@
 // Code-selected evidence only. Provider context is bounded independently from full-page local validation facts.
-import type { ContrastData, Finding } from "../audit/types.ts";
-import type { P5Node, ParsedPage, Focusability } from "../html/parse.ts";
+import type { Finding } from "../audit/types.ts";
+import type { P5Node, ParsedPage } from "../html/parse.ts";
+import type { PromptContext } from "../../shared/proposeRequest.ts";
+import { contextWire } from "../../shared/prompt.ts";
 import { childrenOf, getAttr, isElementNode, isTextNode, nativeFocusability } from "../html/parse.ts";
 import { CONTEXT_MAX_BYTES, CONTEXT_PARENT_CHUNK_MAX_CHARS, CONTEXT_TARGET_TAG_MAX_CHARS, utf8ByteLength } from "../limits.ts";
 import type { ValueGateContext } from "../../shared/valueGates.ts";
 import { screenText } from "../../shared/screen.ts";
 
 export interface NameCandidate { readonly source: "inner" | "title" | "placeholder" | "value" | "image-stem" | "label"; readonly value: string }
-export interface ProposalContext {
-  readonly rule: string;
-  readonly ordinal: number | null;
-  readonly tagName: string | null;
-  readonly targetTag: string;
-  readonly parentChunk: string;
-  readonly precedingHeading: string;
-  readonly previousHeadingLevel: number | null;
-  readonly firstH1: string;
-  readonly fileTitle: string;
-  readonly summary: string;
-  readonly candidates: readonly NameCandidate[];
-  readonly contrast: ContrastData | null;
-  readonly tabindex: string | null;
-  readonly focusability: Focusability;
-  readonly screened: boolean;
-}
+export type ProposalContext = PromptContext;
 export interface ContextBundle {
   readonly context: ProposalContext;
   readonly validation: ValueGateContext;
@@ -52,9 +38,6 @@ export function humanizeFileStem(path: string): string | null {
     /^[\da-f-]{8,}$/i.test(name) || /^\d+$/.test(name) || /^(?:image|photo|picture|pic|icon|logo|banner|spacer|blank|untitled)(?:[\s_-]*\d+)?$/i.test(name)) return null;
   const words = name.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
   return words === "" ? null : words.charAt(0).toUpperCase() + words.slice(1);
-}
-function contextWire(context: ProposalContext): string {
-  return `<page_data>${JSON.stringify(context).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</page_data>`;
 }
 /** The actual remote wire excerpt. Fail closed even if a caller bypasses buildContext's bounds. */
 export function serializeContext(context: ProposalContext): string {

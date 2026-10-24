@@ -36,6 +36,7 @@ export async function runFix(input: RunFixInput): Promise<FixResult> {
     catch { return stop("inconclusive", "proposal", ["proposer_error"]); }
     if (response.kind === "inconclusive") return stop("inconclusive", "proposal", [response.reason]);
     if (response.kind === "abstain") return stop("needs_human", "proposal", [response.reason]);
+    if (response.kind === "rejected") return stop("rejected", "schema", response.reasons);
     const parsed = parseProposal(response.value);
     if (!parsed.ok) return stop("rejected", "schema", parsed.reasons);
     if (isAbstain(parsed.value)) return stop("needs_human", "proposal", [parsed.value.abstain]);

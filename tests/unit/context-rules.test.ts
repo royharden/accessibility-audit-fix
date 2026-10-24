@@ -20,7 +20,7 @@ function setup(source: string, rule: string, tag: string) {
 }
 async function proposed(s: ReturnType<typeof setup>) {
   const response = await rulesProposer.propose(s.finding, s.bundle.context, { attempt: 1, reasons: [] });
-  if (response.kind !== "proposal") throw new Error(response.reason);
+  if (response.kind !== "proposal") throw new Error(response.kind === "rejected" ? response.reasons.join(",") : response.reason);
   const parsed = parseProposal(response.value);
   if (!parsed.ok || isAbstain(parsed.value)) throw new Error("invalid rules output");
   return parsed.value.ops;
