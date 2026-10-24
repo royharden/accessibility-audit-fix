@@ -14,6 +14,7 @@ export const ProposeResponseSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("abstain"), reason: z.string().min(1).max(500), usage: UsageSchema }).strict(),
   z.object({ kind: z.literal("rejected"), reasons: z.array(z.string().min(1).max(300)).min(1).max(50), usage: UsageSchema }).strict(),
   z.object({ kind: z.literal("error"), code: z.enum(ERROR_CODES), usage: UsageSchema.optional() }).strict(),
+  z.object({ kind: z.literal("triage"), decision: z.enum(["pass", "reject", "route"]), reasons: z.array(z.string().min(1).max(100)).max(10), usage: UsageSchema }).strict(),
 ]).superRefine((response, ctx) => {
   if (response.kind === "ops") { const result = parseProposal({ ops: response.ops }); if (!result.ok) for (const reason of result.reasons) ctx.addIssue({ code: "custom", message: reason }); }
 });

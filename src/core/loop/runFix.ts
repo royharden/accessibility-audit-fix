@@ -6,7 +6,9 @@ import { buildContext } from "../proposers/context.ts";
 import { isAbstain, parseProposal } from "../../shared/opsSchema.ts";
 import { checkOpsForFinding } from "../../shared/ruleOps.ts";
 import { checkProposalValues } from "../../shared/valueGates.ts";
-import { isEligibleRule } from "../rules.ts";
+import { isEligibleRule, bucketOf } from "../rules.ts";
+import { gateResult } from "../gate/reasons.ts";
+import type { ReviewResponse } from "../proposers/types.ts";
 import { resolveOps } from "../ops/resolve.ts";
 import { applyResolved } from "../ops/apply.ts";
 import { checkInvariants } from "../html/invariants.ts";
@@ -34,17 +36,18 @@ export async function runFix(input: RunFixInput): Promise<FixResult> {
     let response;
     try { response = await proposer.propose(finding, bundle.context, { attempt: number, reasons: attempts.at(-1)?.reasons.slice(0, MAX_RETRY_REASONS) ?? [] }); }
     catch { return stop("inconclusive", "proposal", ["proposer_error"]); }
-    if (response.kind === "inconclusive") return stop("inconclusive", "proposal", [response.reason]);
-    if (response.kind === "abstain") return stop("needs_human", "proposal", [response.reason]);
-    if (response.kind === "rejected") return stop("rejected", "schema", response.reasons);
+    const stopped = (state: FixAttempt["state"], stage: FixAttempt["stage"], reasons: readonly string[]): FixAttempt => ({ ...stop(state, stage, reasons), ...(response.cache === undefined ? {} : { cache: response.cache }) });
+    if (response.kind === "inconclusive") return stopped("inconclusive", "proposal", [response.reason]);
+    if (response.kind === "abstain") return stopped("needs_human", "proposal", [response.reason]);
+    if (response.kind === "rejected") return stopped("rejected", "schema", response.reasons);
     const parsed = parseProposal(response.value);
-    if (!parsed.ok) return stop("rejected", "schema", parsed.reasons);
-    if (isAbstain(parsed.value)) return stop("needs_human", "proposal", [parsed.value.abstain]);
+    if (!parsed.ok) return stopped("rejected", "schema", parsed.reasons);
+    if (isAbstain(parsed.value)) return stopped("needs_human", "proposal", [parsed.value.abstain]);
     const ops = parsed.value.ops;
     const matrix = checkOpsForFinding(finding, ops);
-    if (!matrix.ok) return stop("rejected", "matrix", matrix.reasons);
+    if (!matrix.ok) return stopped("rejected", "matrix", matrix.reasons);
     const values = checkProposalValues(finding.rule, ops, bundle.validation);
-    if (!values.ok) return stop("rejected", "value", values.reasons);
+    if (!values.ok) return stopped("rejected", "value", values.reasons);
     const resolution = resolveOps(page, finding, ops);
     if (!resolution.ok) return stop(resolution.state === "rejected" ? "rejected" : "needs_human", "resolve", resolution.reasons);
     const resolved = resolution.resolved;
@@ -55,10 +58,16 @@ export async function runFix(input: RunFixInput): Promise<FixResult> {
     try { rendered = input.render(applied.text, applied.insertedTitleStart); after = await engine.audit(rendered); }
     catch { return { ...stop("inconclusive", "audit", ["after_audit_error"]), ops, resolved, applied, invariants }; }
     const gateInput = { baseline, after, target: finding, invariants, changedNames: changedNameOrdinals([resolved]) };
-    const gate = strictGate(gateInput);
+    const codeGate = strictGate(gateInput); let gate = codeGate; let review: ReviewResponse | undefined;
+    if (codeGate.accepted === true && bucketOf(finding.rule) === "content" && proposer.reviewAccepted !== undefined) {
+      try { review = await proposer.reviewAccepted(finding, bundle.context, ops, codeGate, number); }
+      catch { review = { decision: "inconclusive", reasons: ["jev_review_error"] }; }
+      if (review.decision !== "pass") gate = gateResult("strict", review.decision === "reject" ? "rejected" : review.decision === "route" ? "needs_human" : "inconclusive", review.reasons, codeGate.nameCheck);
+    }
     // strict never returns not_applicable; keep the state projection explicit and fail closed if it ever does.
     const state = gate.state === "not_applicable" ? "inconclusive" : gate.state;
     return { number, state, stage: "gate", reasons: gate.reasons, ops, resolved, applied, after, rendered, invariants, gate,
+      ...(review === undefined ? {} : { review, codeGate }), ...(response.cache === undefined ? {} : { cache: response.cache }),
       variants: { targetOnly: targetOnlyGate(gateInput), scoreDelta: scoreDeltaGate(gateInput), regionScoped: regionScopedGate(gateInput, page) } };
   };
   for (let number = 1; number <= cap; number++) {

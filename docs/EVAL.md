@@ -1,0 +1,31 @@
+# Evaluation protocol
+
+**Not run.** No measured gate rates, costs, confidence intervals, detected quotas, retained Jev benefit or ACT results exist. [Results](../results/results.md) and [failures](../results/failures.md) are the authoritative generated-output destinations; current placeholders are explicit.
+
+## Streams and truth
+
+The generator plans 40 synthetic pages, 20 dev and 20 heldout, with disjoint template families. It plants defects and emits private oracle files plus a manifest with source hashes, seed, freeze date, split, counts and shortfalls. Planned coverage is at least ten planted defects per split for each of the nine jsdom-measurable eligible rules. Planting is not detection: activation must audit all pages and report actual detected denominators and quota gaps. Contrast belongs to the iframe profile. Generated corpus/manifest files were intentionally not produced under Dirty Mode.
+
+Oracle truth lives in Node-only `gold`, never in proposer context or browser/edge code. It checks semantic truth independently of axe and human approvals. A wrong-language change can pass every code gate and still be oracle-wrong.
+
+The 16 trap replays form a separate adversarial table. Mock proposals belong to this table; scripted engine evidence must not be labeled real axe reproduction or transferred to a different rules proposal. The five-state demo uses actual intended jsdom auditing and reports failure if it cannot reproduce all states; runtime reproduction remains pending.
+
+ACT is a separate external table, never pooled with heldout or traps. `fetch-act --manifest` is an explicit activation command using reviewed W3C URLs and exact SHA-256 pins. `eval --act` reads only the previously fetched local cache. `--act-only` implies `--act` and skips synthetic gold/manifest and trap inputs; `--act-only --proposers mock` is rejected because mock has no ACT proposals. Passed cases never propose; failed cases are attempted only where the mapped baseline rule reproduces. ACT expectation is not semantic fix truth: unsupported oracle judgments remain unknown/unscored. Display actual case counts and exclusions. Dataset terms/pins must be checked before fetch; no ACT files were downloaded or redistributed.
+
+## Gates and denominators
+
+First-pass proposals are the same stream for target-only, score-delta, region-scoped and strict gates. Schema failures, invalid values, abstentions, unsupported rule/op pairs and pre-proposal human-needed items remain visible outside the four gate columns. Only strict gating is evaluated after retries, up to three attempts. Optional Noul review is recorded separately: the first-pass comparison retains the code-gate verdict before triage; a later reject/route/inconclusive outcome can block effective acceptance and export without rewriting those comparison cells.
+
+Report first-pass accepted, oracle-wrong accepted and oracle-correct rejected counts, separately by mechanical/content status, rule and proposer. The intended headline is a future measured statement on N heldout planted defects, never a promise of zero error. Keep baseline detection coverage, attempted yield and conclusive yield distinct. Stable known baselines define detection coverage; failed/unstable baselines are unknown and excluded from that denominator, with their counts displayed. Eligible items routed to human before proposal are not attempted. Inconclusive attempts remain visible but do not silently enter conclusive denominators. Oracle-unknown cases cannot count as either correct or wrong.
+
+Wilson 95% intervals use observed integer counts: n=0 is n/a; n<10 is flagged. Page clustering and related synthetic defects limit independence; intervals do not prove generalization. Region gates are n/a for page-level findings where no meaningful region exists. Engine profiles are not interchangeable, and jsdom skipped measurements cannot become strict browser claims.
+
+## Methods, budgets and reproducibility
+
+Offline flags: `npm run eval -- --proposers rules,mock`. Paid methods add `llm-A,llm-B,jev` and `--run-key <owner-created-period-key>`. `jev` aliases Jev Choice. Jev requires `enabled=true`, `devSelected=true` and configured non-null `choiceMinConfidence`, `rejectAt` and `routeAt` thresholds, with `routeAt <= rejectAt`. Normal use also requires `retained=true` and `heldoutWin=true`; `--experimental-jev` waives only those last two requirements for evaluation before retention. It does not enable the policy, select thresholds or mark them as selected on dev data. The current policy has all four flags false and null thresholds, so the flag alone still cannot call Jev. Optional `--jev-triage` requires the same ready policy and an applicable non-mock base proposer, and wraps only code-accepted content. Select thresholds using dev data only, freeze them, then require heldout benefit before retaining by default. Unrun calibration cannot justify a claimed win.
+
+All paid CLI requests use an operator JWT and edge budget reservation, not local provider keys. Owner cap proposal is $15 per eval run; demo proposals are $2 global/day and $0.25 user/day. Prices/models are inactive until verified and pinned. Checkpoints bind identity, run, source/profile/schema/prompt/method/model/attempt; resume cannot reissue a settled response-lost call as fresh work. Actual server rows provide the call ledger. Unknown cost stays null or conservatively reserved according to settlement; no token estimates are reported as billing.
+
+Jev caches key model/state/questions plus policy/config version. Hits reuse typed decisions with original call/attempt provenance and no invented fresh usage. The CLI decision cache is results/jev-cache.jsonl (gitignored); browser caching is in memory per proposer instance. Local JSONL can contain proposed values; treat generated artifacts as owner-local inputs and inspect them before any later sharing. Live latency/cost comparisons must distinguish cache hits, current calls, unknown charges and unavailable evidence.
+
+Pin dependencies/axe/models/prices/prompts/profile, freeze generated manifests, and record raw hashes and run flags before any headline evaluation. All steps, including tests, budget races, provider round trips and report generation, remain in [deferred validation](DEFERRED-VALIDATION.md).

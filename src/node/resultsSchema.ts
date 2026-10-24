@@ -2,8 +2,12 @@ import { z } from "../shared/deps.ts";
 import { ELIGIBLE_RULE_IDS, bucketOf } from "../shared/rules.ts";
 import { groupedMetrics } from "../core/metrics/gateTable.ts";
 import type { Rate } from "../core/stats/wilson.ts";
+import { ActCaseRecordSchema } from "./actEval.ts";
+import type { ActCaseRecord } from "./actEval.ts";
 const Hash = z.string().regex(/^[a-f0-9]{64}$/).nullable();
-const State = z.enum(["verified", "checked", "rejected", "inconclusive", "needs_human", "not_attempted", "not_measured"]);
+const State = z.enum(["verified", "checked", "rejected", "inconclusive", "needs_human", "not_attempted", "not_measured", "not_applicable"]);
+const Cache = z.object({ key: z.string(), originCallId: z.string(), originAttemptId: z.string() }).strict();
+const Review = z.object({ decision: z.enum(["pass", "reject", "route", "inconclusive"]), reasons: z.array(z.string()), cache: Cache.optional() }).strict();
 export const GateResultSchema = z.object({ gate: z.enum(["strict", "target-only", "score-delta", "region-scoped"]),
   state: z.enum(["verified", "checked", "rejected", "inconclusive", "needs_human", "not_applicable"]), accepted: z.boolean().nullable(),
   reasons: z.array(z.string()), nameCheck: z.enum(["passed", "failed", "skipped_not_measured", "not_applicable"]) }).strict().superRefine((gate, ctx) => {
@@ -11,8 +15,8 @@ export const GateResultSchema = z.object({ gate: z.enum(["strict", "target-only"
     if (accepted !== gate.accepted) ctx.addIssue({ code: "custom", message: "gate_acceptance_mismatch" });
   });
 const Gates = z.object({ strict: GateResultSchema, "target-only": GateResultSchema, "score-delta": GateResultSchema, "region-scoped": GateResultSchema }).strict();
-const FirstPass = z.object({ state: State, stage: z.string().nullable(), reasons: z.array(z.string()), oracleCorrect: z.boolean().nullable(), gates: Gates.nullable() }).strict();
-const Final = z.object({ state: State, reasons: z.array(z.string()), oracleCorrect: z.boolean().nullable(), strict: GateResultSchema.nullable(), attempts: z.number().int().nonnegative().max(3) }).strict();
+const FirstPass = z.object({ state: State, stage: z.string().nullable(), reasons: z.array(z.string()), oracleCorrect: z.boolean().nullable(), gates: Gates.nullable(), cache: Cache.optional(), review: Review.optional() }).strict();
+const Final = z.object({ state: State, reasons: z.array(z.string()), oracleCorrect: z.boolean().nullable(), strict: GateResultSchema.nullable(), attempts: z.number().int().nonnegative().max(3), cache: Cache.optional(), review: Review.optional() }).strict();
 export const ResultRowSchema = z.object({
   schemaVersion: z.literal(1), kind: z.literal("defect"), table: z.enum(["traps", "heldout", "act"]), pageId: z.string().min(1), family: z.string(),
   rule: z.enum(ELIGIBLE_RULE_IDS), ordinal: z.number().int().nonnegative().nullable(), fingerprint: z.string().nullable(), bucket: z.enum(["mechanical", "content"]),
@@ -34,12 +38,15 @@ export const ResultRowSchema = z.object({
   if (row.proposer === "mock" && row.table !== "traps") issue("mock_outside_trap_table");
 });
 export const NotRunSchema = z.object({ schemaVersion: z.literal(1), kind: z.literal("not_run"), reason: z.string().min(1) }).strict();
-export const ResultsRecordSchema = z.union([ResultRowSchema, NotRunSchema]);
+export const ResultsRecordSchema = z.union([ResultRowSchema, NotRunSchema, ActCaseRecordSchema]);
 export type ResultRow = z.infer<typeof ResultRowSchema>;
 export function parseResultsJsonl(text: string): ResultRow[] {
   return text.split(/\r?\n/).filter((line) => line.trim() !== "").flatMap((line) => {
     const record = ResultsRecordSchema.parse(JSON.parse(line) as unknown); return record.kind === "defect" ? [record] : [];
   });
+}
+export function parseActCaseRecords(text: string): ActCaseRecord[] {
+  return text.split(/\r?\n/).filter((line) => line.trim() !== "").flatMap((line) => { const record = ResultsRecordSchema.parse(JSON.parse(line) as unknown); return record.kind === "act_case" ? [record] : []; });
 }
 const cell = (value: string): string => value.replace(/\|/g, "\\|").replace(/[\r\n]/g, " ");
 /** Sole failure-list input is validated saved result rows; no fixture/HTML/oracle reads or manual numbers. */
@@ -65,14 +72,15 @@ function rateText(rate: Rate): string {
   return `${rate.numerator}/${rate.denominator} = ${(rate.value * 100).toFixed(1)}% [${((rate.low ?? 0) * 100).toFixed(1)}, ${((rate.high ?? 1) * 100).toFixed(1)}]${rate.smallN ? " *n<10*" : ""}`;
 }
 /** All numbers come from result rows. The three evidence tables are deliberately never pooled. */
-export function resultsMarkdown(rows: readonly ResultRow[]): string {
-  const output = ["# Evaluation results", "", rows.length === 0 ? "Not run. No measured rows exist." : "Generated from validated results.jsonl only.", "",
-    "95% Wilson intervals; n<10 flagged. Defects on one page are dependent: intervals do not adjust for page clustering. Human approvals are unmeasured and never replace oracle correctness. First-pass gate columns replay one identical proposal; schema/matrix/value rejections stay outside gate cells. After-retry yields are strict-only.", "",
+export function resultsMarkdown(rows: readonly ResultRow[], actCases: readonly ActCaseRecord[] = []): string {
+  const output = ["# Evaluation results", "", rows.length === 0 && actCases.length === 0 ? "Not run. No measured rows exist." : "Generated from validated results.jsonl only.", "",
+    "95% Wilson intervals; n<10 flagged. Defects on one page are dependent: intervals do not adjust for page clustering. Human approvals are unmeasured and never replace oracle correctness. First-pass gate columns replay one identical proposal; schema/matrix/value rejections stay outside gate cells. First-pass code-gate comparison is recorded before optional Noul filtering; review/cache provenance stays separate. After-retry yields use the effective strict result after filtering.", "",
     "Detection coverage divides detected targets by known detection/miss observations from stable measured baselines. Failed, unstable or unknown baseline observations are excluded, never counted as misses. Inconclusive totals include all measured rows; baseline and eligible counts show the subgroups. Baseline unknown and unstable counts can overlap: unstable means baselineStable=false, including failed or partial audits where stability was not established.", ""];
   for (const table of ["traps", "heldout", "act"] as const) {
     output.push(`## ${table === "traps" ? "Scripted traps (unit evidence; no generalisation)" : table === "heldout" ? "Held-out planted defects" : "ACT external cases (separate; not headline)"}`, "");
     const selected = rows.filter((row) => row.table === table);
-    if (selected.length === 0) { output.push("Not run / not measured.", ""); continue; }
+    if (table === "act" && actCases.length > 0) output.push(`Actual cases: ${actCases.length}; passed cases with zero proposals: ${actCases.filter((item) => item.expectation === "passed" && item.proposedTargets === 0).length}; stable failed cases with mapped violations: ${actCases.filter((item) => item.expectation === "failed" && item.stable && (item.mappedViolations ?? 0) > 0).length}; baseline-inconclusive cases: ${actCases.filter((item) => !item.stable).length}; passed-case mapping disagreements: ${actCases.filter((item) => item.expectation === "passed" && item.stable && (item.mappedViolations ?? 0) > 0).length}. Repair oracle remains unknown/unscored.`, "");
+    if (selected.length === 0) { output.push(table === "act" && actCases.length > 0 ? "No eligible reproduced repair targets; no correctness rate is claimed." : "Not run / not measured.", ""); continue; }
     output.push("| Proposer | Rule | Bucket | Planted | Detection coverage (known stable baselines) | Eligible / attempted | Inconclusive (all / baseline / eligible) | Baseline unknown / unstable | Pre-gate rejects | First-pass correct yield | After-retry strict correct yield | Human approvals | Cost / verified / checked (micros) |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|");
     for (const group of groupedMetrics(selected)) {
       const m = group.metrics; const mechanical = group.bucket === "mechanical";

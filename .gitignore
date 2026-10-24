@@ -9,3 +9,4 @@ coverage/
 *.log
 results/eval-checkpoint-*.jsonl
 results/callledger.jsonl
+results/jev-cache.jsonl

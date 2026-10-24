@@ -15,3 +15,8 @@ for (const file of await walk(source)) {
   await mkdir(dirname(output), { recursive: true }); await copyFile(file, output);
 }
 console.log("Shared edge copies synchronized; deps.ts preserved. Run byte-parity contract tests before deployment.");
+
+// The policy is part of both the client cache key and the server allowlist; deploy it with the same bytes.
+const policySource = fileURLToPath(new URL("../config/jev-thresholds.json", import.meta.url));
+const policyTarget = fileURLToPath(new URL("../supabase/functions/propose-fix/jev-thresholds.json", import.meta.url));
+await copyFile(policySource, policyTarget);

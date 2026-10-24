@@ -20,8 +20,10 @@ import type { DecisionState } from "./lib/decisionState.ts";
 import { createBrowserProposer } from "./lib/proposeClient.ts";
 import { SAMPLE_HTML, sampleMockProposer } from "./sample.ts";
 import engineProfileText from "../../engine-profile.json?raw";
+import jevPolicy from "../../config/jev-thresholds.json" with { type: "json" };
+import { JevPolicySchema, canUseJev } from "../shared/typesafePlan.ts";
 
-type Mode = "rules" | "mock" | "llm-A";
+type Mode = "rules" | "mock" | "llm-A" | "llm-B" | "jev";
 const words = (value: string): string => value.replaceAll("_", " ");
 const problemText = (error: unknown): string => error instanceof Error ? error.message.slice(0, 300) : "Operation failed. Please try again.";
 const RECONCILE_DECISIONS = "Saved decisions are unconfirmed. Export is blocked. Reload saved decisions or retry the pending decision; your current audit will be kept.";
@@ -87,7 +89,7 @@ export function App() {
   }, [resetRun]);
 
   const inputBytes = utf8ByteLength(source);
-  const live = mode === "llm-A";
+  const live = mode === "llm-A" || mode === "llm-B" || mode === "jev";
   const rulings = decisions.rulings;
   const pending = pendingDecision(decisions);
   const downloadsReady = decisions.trusted && preparedDecisions.current === decisions && combined?.state === "ready";
@@ -114,7 +116,7 @@ export function App() {
     try {
       let proposer: FixProposer;
       if (mode === "rules") proposer = rulesProposer;
-      else if (mode === "llm-A") proposer = createBrowserProposer("llm-A", backend);
+      else if (mode === "llm-A" || mode === "llm-B" || mode === "jev") proposer = createBrowserProposer(mode === "jev" ? "jev-choice" : mode, backend);
       else {
         // The sample adapter derives identities from the same original parse as the engine.
         let sample: FixProposer | null = null;
@@ -279,6 +281,8 @@ export function App() {
         <label className="upload-label" htmlFor="html-upload">Or upload one UTF-8 HTML file</label><input id="html-upload" type="file" accept=".html,.htm,text/html" disabled={busy || authBusy} onChange={(event) => void upload(event.currentTarget.files?.[0])} />
         <label className="field-label proposer-label" htmlFor="proposer">Proposal method</label><select id="proposer" value={mode} disabled={busy || authBusy} onChange={(event) => { resetRun(); setMode(event.currentTarget.value as Mode); setConsent(false); }}>
           <option value="mock">Scripted sample · no model calls</option><option value="rules">Deterministic rules · no model calls</option><option value="llm-A" disabled={backend.client === null || user === null}>Live model A · sign-in required</option>
+          <option value="llm-B" disabled={backend.client === null || user === null}>Live model B · sign-in required</option>
+          <option value="jev" disabled={backend.client === null || user === null || !canUseJev(JevPolicySchema.parse(jevPolicy))}>Jev Choice · unretained / disabled until calibrated</option>
         </select>
         {live && <label className="consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.currentTarget.checked)} disabled={busy || authBusy} /><span>I understand live mode sends up to 4 KB of selected page excerpts to the configured provider. Calls use the server budget.</span></label>}
         <button type="button" className="button primary audit-button" disabled={busy || authBusy || source.length === 0 || inputBytes > MAX_INPUT_BYTES || (live && !consent)} onClick={() => void audit()}>{busy ? "Working…" : "Audit & propose"}<span aria-hidden="true">↗</span></button>

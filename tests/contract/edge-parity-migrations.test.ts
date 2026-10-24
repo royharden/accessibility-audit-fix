@@ -59,3 +59,7 @@ it("demo reservation obtains both daily defaults from the service-only settings 
   expect(reserve).toContain("values('user',p_user_id,v_period,v_settings.user_daily_cap_usd_micros)");
   expect(reserve).not.toMatch(/\b(?:2000000|250000)\b/);
 });
+
+it("keeps the Jev activation policy byte-identical across client and edge", () => {
+  expect(readFileSync(join(root, "config/jev-thresholds.json")).equals(readFileSync(join(root, "supabase/functions/propose-fix/jev-thresholds.json")))).toBe(true);
+});

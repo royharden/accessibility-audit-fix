@@ -1,0 +1,12 @@
+{
+  "version": "jev-policy-v1",
+  "model": "jev-1.13.0",
+  "enabled": false,
+  "devSelected": false,
+  "retained": false,
+  "heldoutWin": false,
+  "choiceMinConfidence": null,
+  "rejectAt": null,
+  "routeAt": null,
+  "evidence": "Not run. No dev calibration, held-out comparison or retention evidence exists."
+}

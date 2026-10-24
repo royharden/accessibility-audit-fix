@@ -11,6 +11,8 @@ import { isAbstain, parseProposal } from "./opsSchema.ts";
 import { checkOpsForFinding } from "./ruleOps.ts";
 import { checkProposalValues } from "./valueGates.ts";
 import type { ProviderReply } from "./providers/anthropic.ts";
+import { JEV_NAME_RULES, TriageDecisionSchema } from "./typesafePlan.ts";
+import { bucketOf } from "./rules.ts";
 export interface EdgeServices {
   readonly providerConfigured: boolean;
   hasEvalBudget(uid: string, runKey: string): Promise<boolean>;
@@ -28,6 +30,8 @@ function rpcCode(error: unknown): ProposeResponse & { kind: "error" } {
 }
 export async function runEdgeProposal(request: ProposeRequest, uid: string, services: EdgeServices): Promise<ProposeResponse> {
   if (new TextEncoder().encode(contextWire(request.context)).byteLength > CONTEXT_BYTES) return { kind: "error", code: "payload_too_large" };
+  if (request.proposer === "jev-choice" && (!JEV_NAME_RULES.some((rule) => rule === request.finding.rule) || request.context.candidates.length === 0)) return { kind: "error", code: "bad_request" };
+  if (request.proposer === "jev-triage" && (bucketOf(request.finding.rule) !== "content" || request.context.proposedValue === undefined)) return { kind: "error", code: "bad_request" };
   const method = METHODS[request.proposer];
   if (request.model !== method.model || !(services.methodPinned ?? isPinnedMethod)(request.proposer) || !services.providerConfigured) return { kind: "error", code: "provider_not_configured" };
   const hashes = await requestHashes(uid, request); // Received pre-server-screen context; never a client-supplied binding hash.
@@ -46,10 +50,13 @@ export async function runEdgeProposal(request: ProposeRequest, uid: string, serv
   }
   let reply: ProviderReply;
   try { reply = await services.call(request); } catch { reply = { kind: "error", code: "provider_error", inputTokens: null, outputTokens: null }; }
-  let result: { kind: "ops"; ops: NonNullable<ProposeResponse & { kind: "ops" }>["ops"] } | { kind: "abstain"; reason: string } | { kind: "rejected"; reasons: string[] } | { kind: "error"; code: "provider_error" | "provider_timeout" | "rate_limited" };
+  let result: { kind: "ops"; ops: NonNullable<ProposeResponse & { kind: "ops" }>["ops"] } | { kind: "abstain"; reason: string } | { kind: "rejected"; reasons: string[] } | { kind: "triage"; decision: "pass" | "reject" | "route"; reasons: string[] } | { kind: "error"; code: "provider_error" | "provider_timeout" | "rate_limited" };
   let status: "ok" | "abstain" | "schema_reject" | "unknown_charge";
   if (reply.kind === "error") { status = "unknown_charge"; result = { kind: "error", code: reply.code ?? "provider_error" }; }
-  else {
+  else if (request.proposer === "jev-triage") {
+    const decision = TriageDecisionSchema.safeParse(reply.value); status = decision.success ? "ok" : "schema_reject";
+    result = decision.success ? { kind: "triage", ...decision.data } : { kind: "rejected", reasons: ["invalid_triage_response"] };
+  } else {
     const parsed = parseProposal(reply.value);
     if (!parsed.ok) { status = "schema_reject"; result = { kind: "rejected", reasons: [...parsed.reasons] }; }
     else if (isAbstain(parsed.value)) { status = "abstain"; result = { kind: "abstain", reason: parsed.value.abstain }; }

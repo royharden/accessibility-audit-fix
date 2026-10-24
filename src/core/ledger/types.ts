@@ -4,6 +4,7 @@ import type { ResolvedOps } from "../ops/resolve.ts";
 import type { ApplySuccess } from "../ops/apply.ts";
 import type { InvariantResult } from "../html/invariants.ts";
 import type { GateResult } from "../gate/reasons.ts";
+import type { CacheEvidence, ReviewResponse } from "../proposers/types.ts";
 
 export type FixState = "verified" | "checked" | "rejected" | "inconclusive" | "needs_human";
 export type AttemptStage = "context" | "proposal" | "schema" | "matrix" | "value" | "resolve" | "audit" | "gate";
@@ -17,6 +18,9 @@ export interface FixAttempt {
   readonly applied?: ApplySuccess;
   readonly after?: AuditResult;
   readonly gate?: GateResult;
+  readonly codeGate?: GateResult;
+  readonly cache?: CacheEvidence;
+  readonly review?: ReviewResponse;
   readonly invariants?: InvariantResult;
   readonly rendered?: string;
   /** Absent for schema/value rejection: those rows are outside gate-comparison denominators. */

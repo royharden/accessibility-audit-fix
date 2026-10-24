@@ -5,6 +5,9 @@ import type { ProposeRequest } from "../../shared/proposeRequest.ts";
 import { readBoundedBodyJson } from "../../shared/bodyJson.ts";
 import { utf8ByteLength } from "../../core/limits.ts";
 import type { BrowserBackend } from "./supabase.ts";
+import policy from "../../../config/jev-thresholds.json" with { type: "json" };
+import { JevPolicySchema } from "../../shared/typesafePlan.ts";
+import { createJevProposer, createMemoryJevCache } from "../../core/proposers/jev.ts";
 function uuid(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16)); bytes[6] = ((bytes[6] ?? 0) & 15) | 64; bytes[8] = ((bytes[8] ?? 0) & 63) | 128;
   const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join(""); return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
@@ -41,5 +44,6 @@ export function createBrowserTransport(backend: BrowserBackend, transport: typeo
   };
 }
 export function createBrowserProposer(method: MethodId, backend: BrowserBackend): FixProposer {
+  if (method === "jev-choice") return createJevProposer({ policy: JevPolicySchema.parse(policy), cache: createMemoryJevCache(), attemptId: async () => uuid(), invoke: createBrowserTransport(backend) });
   return createRemoteProposer({ proposer: method, attemptId: async () => uuid(), invoke: createBrowserTransport(backend) });
 }

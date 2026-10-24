@@ -8,6 +8,11 @@ import { SYSTEM_PROMPT, userPrompt } from "./shared/prompt.ts";
 import { requestHashes } from "./shared/requestHash.ts";
 import { z } from "./shared/deps.ts";
 import { readBoundedBodyJson } from "./shared/bodyJson.ts";
+import { callOpenaiCompatible, compatibleEndpoint } from "./shared/providers/openaiCompatible.ts";
+import { callTypesafe } from "./shared/providers/typesafe.ts";
+import { JevPolicySchema, canUseJev } from "./shared/typesafePlan.ts";
+import { canonicalJson, sha256Text } from "./shared/requestHash.ts";
+import thresholds from "./jev-thresholds.json" with { type: "json" };
 
 const ClaimSchema = z.object({ call_id: z.string(), claim: z.enum(["new", "pending", "settled"]) }).strict();
 Deno.serve(async (request: Request): Promise<Response> => {
@@ -36,11 +41,16 @@ Deno.serve(async (request: Request): Promise<Response> => {
     const body = await readBoundedBodyJson(request, controller.signal, 16384); const parsed = ProposeRequestSchema.safeParse(body);
     if (!parsed.success) return respond({ kind: "error", code: "bad_request" }, 400);
     const input = parsed.data; const uid = verified.data.user.id;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"); const key = Deno.env.get("ANTHROPIC_API_KEY");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const key = input.proposer === "llm-A" ? Deno.env.get("ANTHROPIC_API_KEY") : input.proposer === "llm-B" ? Deno.env.get("OPENAI_COMPATIBLE_API_KEY") : Deno.env.get("TYPESAFE_API_KEY");
+    const base = input.proposer === "llm-B" ? Deno.env.get("OPENAI_COMPATIBLE_BASE_URL") ?? "" : "";
+    let baseAllowed = false; if (input.proposer === "llm-B") { try { compatibleEndpoint(base); baseAllowed = true; } catch { /* inactive */ } }
+    const policy = JevPolicySchema.parse(thresholds);
+    const jevAllowed = canUseJev(policy, input.context.jevExperimental === true && input.runKey !== undefined) && input.context.jevPolicyHash === await sha256Text(canonicalJson(policy));
     if (!serviceKey) return respond({ kind: "error", code: "provider_not_configured" });
     const service = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: boundedFetch } });
     const result = await runEdgeProposal(input, uid, {
-      providerConfigured: input.proposer === "llm-A" && key !== undefined && key.trim() !== "",
+      providerConfigured: key !== undefined && key.trim() !== "" && (input.proposer === "llm-A" || input.proposer === "llm-B" && baseAllowed || input.proposer.startsWith("jev-") && jevAllowed),
       async hasEvalBudget(user, runKey) { const result = await service.rpc("has_eval_budget", { p_user_id: user, p_run_key: runKey }); if (result.error !== null) throw new Error(result.error.message); return result.data === true; },
       async reserve(args) { const result = await service.rpc("reserve_llm_call", args); if (result.error !== null) throw new Error(result.error.message); return ClaimSchema.parse(Array.isArray(result.data) ? result.data[0] : result.data); },
       async settle(id, status, inputTokens, outputTokens) { const result = await service.rpc("settle_llm_call", { p_call_id: id, p_status: status, p_input_tokens: inputTokens, p_output_tokens: outputTokens }); if (result.error !== null) throw new Error(result.error.message); },
@@ -49,7 +59,10 @@ Deno.serve(async (request: Request): Promise<Response> => {
         const provider = new AbortController(); const abort = () => provider.abort(); controller.signal.addEventListener("abort", abort, { once: true });
         const remaining = Math.max(0, Math.min(20000, deadline - Date.now() - 5000));
         const timeout = setTimeout(abort, remaining); if (remaining === 0 || controller.signal.aborted) provider.abort();
-        try { return await callAnthropic(key ?? "", { model: value.model, system: SYSTEM_PROMPT, prompt: userPrompt(value), signal: provider.signal }, fetch); }
+        try {
+          const prompt = { model: value.model, system: SYSTEM_PROMPT, prompt: userPrompt(value), signal: provider.signal };
+          return value.proposer === "llm-A" ? await callAnthropic(key ?? "", prompt, fetch) : value.proposer === "llm-B" ? await callOpenaiCompatible(key ?? "", base, prompt, fetch) : await callTypesafe(key ?? "", value, policy, provider.signal, fetch);
+        }
         finally { clearTimeout(timeout); controller.signal.removeEventListener("abort", abort); }
       },
     });

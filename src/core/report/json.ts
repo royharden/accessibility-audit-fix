@@ -19,7 +19,7 @@ async function attemptRecord(attempt: FixAttempt, hash: ReportOptions["sha256"])
     ops: attempt.ops ?? null, opsSha256: attempt.ops === undefined ? null : await hash(JSON.stringify(attempt.ops)),
     sourceSha256: attempt.applied === undefined ? null : await hash(attempt.applied.text),
     renderSha256: attempt.rendered === undefined ? null : await hash(attempt.rendered),
-    gate: attempt.gate ?? null, variants: attempt.variants ?? null,
+    gate: attempt.gate ?? null, codeGate: attempt.codeGate ?? null, review: attempt.review ?? null, cache: attempt.cache ?? null, variants: attempt.variants ?? null,
     invariants: attempt.invariants === undefined ? null : { ok: attempt.invariants.ok, reasons: attempt.invariants.reasons },
     audit: attempt.after === undefined ? null : { ...summary(attempt.after), findings: attempt.after.findings, incomplete: attempt.after.incomplete } };
 }

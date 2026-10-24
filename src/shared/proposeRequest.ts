@@ -15,6 +15,7 @@ export const ContextSchema = z.object({
   // Optional bounded ID evidence; absent evidence makes server aria-labelledby value validation abstain/fail closed.
   ids: z.array(z.object({ id: z.string().min(1).max(100), count: z.number().int().positive() }).strict()).max(20).optional(),
   targetId: z.string().max(100).nullable().optional(),
+  proposedValue: z.string().max(125).optional(), jevExperimental: z.boolean().optional(), jevPolicyHash: z.string().regex(/^[a-f0-9]{64}$/).optional(),
 }).strict();
 type DeepReadonly<T> = T extends readonly (infer V)[] ? readonly DeepReadonly<V>[] : T extends object ? { readonly [K in keyof T]: DeepReadonly<T[K]> } : T;
 export type PromptContext = DeepReadonly<z.infer<typeof ContextSchema>>;

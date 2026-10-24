@@ -26,6 +26,7 @@ export function createRemoteProposer(options: RemoteOptions): FixProposer {
     if (value.kind === "error") return value.code === "screened" ? { kind: "abstain", reason: "screened" } : { kind: "inconclusive", reason: value.code };
     if (value.kind === "abstain") return { kind: "abstain", reason: value.reason };
     if (value.kind === "rejected") return { kind: "rejected", reasons: value.reasons };
+    if (value.kind === "triage") return { kind: "inconclusive", reason: "bad_response" }; // triage is consumed only by the post-code Jev hook
     return { kind: "proposal", value: { ops: value.ops } };
   } };
 }

@@ -304,3 +304,72 @@ executed, dependencies installed or commits created. Other main UI/sample/styles
 At activation run ruling units and typecheck/lint, then real multi-page history and committed-write/lost-response flows, including
 reconciliation that initially sees an old prefix, retry, identity/generation changes and both downloads. Confirm retry/reload reuse the
 current audit without another model call. History limits and concurrent database visibility remain runtime-unverified.
+
+## M8 - Provider B, optional Jev, local ACT path and final source handoff
+
+Construction: 0570_Codex_GPT-61Sol_Sub_S28-CoderM2, 2026-10-24. Main owns README/BOLT-HANDOFF,
+ARCHITECTURE/EVAL/LIMITATIONS/THREAT-MODEL, NOTICE and the Wilson VENDORED resolution. M8 changes have source and test
+sources only. No install, typecheck, lint, test, build, fixture generation, eval, downloader, sync maintenance program,
+auth, database, browser or paid request ran. Existing inherited files and edge copies were preserved outside the inner
+repo with `.M8-0570.bak` suffixes before replacement. Results remain the M5 honest not-run placeholders.
+
+Actual compile-only command:
+
+```
+node --experimental-vm-modules --no-warnings scripts/check-syntax.mjs src scripts tests supabase/functions/propose-fix
+```
+
+**133 files parsed, 0 failures; App.tsx/main.tsx skipped (2) for source review only.** This strips erasable TS and parses
+modules without linking/import evaluation. It proves no SDK/DOM/Deno/React types, JSX, runtime contract, provider, SQL,
+network, safety or measured accuracy. Final report wording edits below changed string literals only. Shared files were
+manually copied, with SHA256 comparisons for all18 canonical TS files other than the intentionally different deps.ts.
+The Jev policy JSON was also copied with equal SHA256. The parity test and updated sync maintenance source cover this
+policy; the maintenance program itself was not executed. package.json was preserved: globals/typescript-eslint already
+have placeholder declarations, and all dependency/model/rate activation pins remain pending.
+
+| Component | Assumption / skipped check | Activation/check |
+|---|---|---|
+| Model B | Server-only fixed allowlisted HTTPS base, chat/completions max_completion_tokens1024, one redirect:error request, shared abort/64KB streamed body; usage prompt_tokens/completion_tokens bounded to reservation maxima. No availability/JSON/cost claim. | Pin exact model/base/rates, run mocked adapter/edge contracts, then one authorized synthetic call with full llm_calls receipt and no hidden retries/redirects. Check provider20s/edge30s/platform deadlines. |
+| TypeSafe HTTP | Official cached System One documentation supports state/model/questions, Choice choice/confidence/probabilities and Noul.noul. No SDK or image interpretation is used. Request context/options/questions and response bytes/usage are bounded. | Reverify pinned API/model/license and actual answer envelope. **The documented endpoint has no output-token-limit request field. Before enabling, owner must establish worst-case billed output fits the1024 reservation, or revise matching SQL/adapter caps first. A post-response usage check cannot cap upstream spending. Current disabled policy and inactive prices block calls.** |
+| Choice policy | Only button-name/link-name/label; code-created candidates plus none, empty candidates no call, stable SHA-derived option IDs, generated value chosen only from supplied candidates. Other rule rows are n/a. Shipped config is disabled/devSelected=false/retained=false/heldoutWin=false with null thresholds. | Run source tests, tune thresholds on dev only, freeze decision config, then perform one heldout comparison and retain only with evidence of a win. --experimental-jev permits a configured dev-selected policy under owner eval budget; it never enables the shipped false/null policy. No efficacy/retention is claimed. |
+| Optional Noul | --jev-triage adds four typed checks only after code accepts a content repair. It can reject/route; local uncertainty is inconclusive. It cannot create ops, promote code rejection or promote content to mechanical verified. First-pass codeGate/variants compare the same original proposal before filtering; afterRetry uses effective final gate. | Run scripted hook/union tests, exercise all decisions and code failures, then calibrate/retain only with dev/heldout evidence. Confirm combined/export membership uses the filtered final gate. No UI triage switch is enabled. |
+| Cache and ledger | CLI results/jev-cache.jsonl and browser RAM per proposer instance; hash binds model/state/questions/policy. Entries store a typed decision and original call/attempt IDs, never usage envelopes. A hit allocates no new attempt or transport call and records cache origin separately. No fourth table. | Test JSONL load/schema/roundtrip and browser cache lifecycle, shuffled options/policy invalidation, auth/generation changes and concurrent cache misses. Confirm cache hits have no fresh ledger/cost/usage claims. Actual paid calls use existing checkpoint/read-back ledger and <=2 transport concurrency. |
+| Eval/ACT | --proposers rules,mock,llm-A,llm-B,jev; paid calls require --run-key and operator route. --act reads already pinned .act-cache only; --act-only skips gold/traps and implies ACT (mock-only rejected). Passed ACT cases get no proposals; failed cases require stable complete mapped baseline violations. Coverage metadata and repair rows stay separate; unknown repair oracle remains null/unscored. | Explicitly pin/download ACT under owner permission, inspect terms/map/hash/UTF8, then run local eval. Exercise passed/mapping-disagreement, incomplete/unstable/unanchored failures and known actual n; regenerate Markdown from saved JSONL. Eval/tests never fetch automatically. No external cases/results exist now. |
+| App/report consistency | Browser offers B through existing auth/consent transport and disabled unretained Jev choice. App decision trust/reconciliation/pagination/generation guards remain. Reports include codeGate/review/cache separately; SQL method/model names match shared allowlist and inactive prices. | Typecheck/build and run actual app/edge roundtrips, inspect bundle secret boundaries and resulting report/provenance. Repeat M7 unknown-write/reload/retry and exact-key approval/combined/download tests after activation. |
+
+### Final CL section6 crosswalk (all18 items pending)
+
+| CL item | Component / unresolved assumption | Required later activation step |
+|---|---|---|
+| 1 | Toolchain/dependency placeholders, no lockfile or command execution | Pin compatible versions; install/freeze lockfile; typecheck, lint, focused unit/property/contracts, build and demo. Source parsing is not these checks. |
+| 2 | jsdom/axe support and baseline determinism | Run probe-engine, repeated dev audits, record real support/versions/profile hashes; freeze profile before heldout. No exception/partial result becomes an empty success. |
+| 3 | Ordinals, malformed recovery, BOM/UTF8/offsets | Run parse/patch/property and malformed-html tests; verify exact source/render/citation identities and output preservation. |
+| 4 | iframe sandbox/CSP/token/nonce/inert resources | Real Chrome/Firefox adversarial checks with network inspection, trusted runner under CSP, inert frame-title, forged messages, timeouts and teardown. |
+| 5 | Browser label-content-name-mismatch support | Reproduce actual browser name-mismatch behavior; jsdom remains explicitly not measured/skipped, not evidence of correctness. |
+| 6 | Ordered migrations never parsed/applied | Inspect actual target migration history, apply pending three in order, inspect tables/RLS/RPCs/settings/grants. SQL source assertions do not prove execution. |
+| 7 | RLS isolation/global invisibility | Use real userA/userB anonymous/operator clients; verify own append/select and refusal of cross-user rows and global budget visibility. |
+| 8 | Atomic server-only budgets/claims/settlement | Direct authenticated RPCs must fail; test concurrent same-attempt one winner, payload conflict, global/user lock order/caps/new users, UTC rollover/stored-period once-only settlement and null/unknown conservative charge. **has_eval_budget false/missing run -> budget_not_found; no reserve/provider/demo fallback; eval calls never touch demo rows.** Keep exact rates frozen throughout a live run. |
+| 9 | Edge deployment/auth/config/copies | Deploy reviewed copied closure/policy only after pins, test missing/invalid JWT, OPTIONS/CORS, body/context caps, screened input, missing provider/base/key -> provider_not_configured and no reserve. Check overall aborted/stalled bodies and actual platform deadline behavior. |
+| 10 | Provider model/rate/envelope/billing contracts | Owner pins all active models/prices and validates bounds; one explicitly authorized tiny synthetic call per provider with actual ledger receipt; include TypeSafe output-reservation caveat above. No provider keys in CLI/app. |
+| 11 | Anonymous/operator auth settings | Provision owner operator and permitted anonymous auth, inspect real restore/refresh/expiry/signout/session-loss behavior, hiddenTTY password and no persistence. Password never comes from env/file. |
+| 12 | Local/edge screen false positives and injection coverage | Run dev/traps text/comment/attribute/escaped cases; tune on dev only, retain bounded machine reasons; verify no canary accepted. Screening is not a safety guarantee. |
+| 13 | Offline corpus/eval/results reproducibility | Explicitly generate frozen seeded corpus, compare two empty output dirs; run rules/mock twice. Check stable actual detection quota/shortfalls, first-pass same-proposal gates, after-retry strict, Wilson/denominators and failures generated only from JSONL. |
+| 14 | **Merged operator route replaces direct provider/EVAL_COST_CAP_USD** | Owner-precreate operator eval_run row (default USD15), authenticate in memory, invoke only propose-fix with --run-key. Verify deterministic IDs, checkpoint resume/lost-settled response stays inconclusive, no recall, matching request hash, ledger read-back, <=2 concurrency and stop on budget_exceeded; never charge demo rows or read local provider keys. |
+| 15 | Optional Jev licence/calibration/heldout retention | Recheck official MIT skill/cookbook/API terms, calibrate dev thresholds, freeze config and compare heldout. Leave disabled/unretained or document omitted unless evidence supports retention. Synthetic threshold tests prove no efficacy. |
+| 16 | ACT terms/pins/map/passed-case behavior | Explicit owner-triggered fetch-act only, verify allowlisted redirects/size/SHA/terms, inspect local cache; run separate ACT table, passed cases never propose, reproduced mapped failures only, unknown oracle unscored and actual n reported. |
+| 17 | Combined approvals/interactions/export UX | Real UI approve mechanical+content/reject/skip, unknown-write trust loss and reconciliation, full paginated history, exact five-field replay, stale generations, interacting headings and overlap/bisection blocked export; no silent trimming. Confirm patch/report downloads use approved current snapshot. |
+| 18 | Bolt import/deployed runtime | Only after owner remote/import grant: inspect exact imported revision, single-package Vite build, auth/settings/migrations/function bundle/secret names and actual roundtrip. Source handoff does not provision anything. |
+
+### CX deferred table crosswalk
+
+| CX component | Covered pending checks |
+|---|---|
+| Dependencies and commands | CL1: install pins/lockfile/type/lint/tests/build outside Dirty Mode. |
+| parse/axe/jsdom | CL2–3: real support/recovery/citations/unchanged baseline stability and no empty-success exceptions. |
+| Browser sandbox | CL4–5: CSP/network/forgery/timeouts/contrast/name mismatch with actual browsers and measured profile. |
+| Patch/review/export | CL3/17: offset/property/invariants, cumulative interactions, exact approvals, unknown writes and full history replay. |
+| SQL/auth | CL6–9/11: inspect ordered migrations, two-user isolation, direct RPC refusal, JWT/grants/settings/atomic stored-period budgets. |
+| Paid adapters | CL8–10/14: owner pins, synthetic receipts, one edge spending route, idempotency/unknown charge, no missing-run fallback. |
+| Eval | CL2/12–14: freeze corpus/profile/split, dev-only tuning, one heldout run, actual detection quota/denominators/JSONL-derived failures and costs. |
+| Jev/ACT | CL15–16 plus M8 table: disabled until calibrated/retained and billing bounds established; local pinned ACT table only, no fabricated oracle or measured n. |
+| Bolt import | CL18: authorized later import/provisioning and actual deployed roundtrip; no source-only readiness claim. |
