@@ -56,6 +56,8 @@ export type InvariantReason = (typeof INVARIANT_REASONS)[number];
 export interface PatchDescription {
   readonly edits: readonly Edit[];
   readonly retag: { readonly ordinal: number; readonly tagName: string } | null;
+  /** Combined export only: disjoint retags; the existing single-fix retag field remains supported. */
+  readonly retags?: readonly { readonly ordinal: number; readonly tagName: string }[];
   readonly insertsTitle: boolean;
   readonly titleText: string | null;
   readonly attrEffects: readonly { readonly ordinal: number; readonly name: string; readonly value: string | null }[];
@@ -292,6 +294,9 @@ export function checkInvariants(before: ParsedPage, patch: PatchDescription, app
 
   // 3. Element sequence, count and offsets.
   const n = before.elements.length;
+  const retags = [...(patch.retag === null ? [] : [patch.retag]), ...(patch.retags ?? [])];
+  if (new Set(retags.map((r) => r.ordinal)).size !== retags.length || retags.some((r) =>
+    before.elements[r.ordinal] === undefined || !/^h[1-6]$/.test(r.tagName))) add("retag_target_mismatch");
   const afterCount = after.elements.length - (titleOrdinal === null ? 0 : 1);
   if (afterCount !== n || (!patch.insertsTitle && titleOrdinal !== null)) {
     add("element_count_changed");
@@ -303,8 +308,9 @@ export function checkInvariants(before: ParsedPage, patch: PatchDescription, app
         add("element_count_changed");
         continue;
       }
-      if (patch.retag !== null && patch.retag.ordinal === i) {
-        if (a.tagName !== patch.retag.tagName || !/^h[1-6]$/.test(b.tagName)) add("retag_target_mismatch");
+      const retag = retags.find((r) => r.ordinal === i);
+      if (retag !== undefined) {
+        if (a.tagName !== retag.tagName || !/^h[1-6]$/.test(b.tagName)) add("retag_target_mismatch");
       } else if (a.tagName !== b.tagName) {
         add("element_sequence_changed");
       }
