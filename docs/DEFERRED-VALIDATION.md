@@ -34,3 +34,40 @@ module. It does not resolve imports, check types, run lint rules or execute anyt
 | M1-10 | engine-profile.json | Declared, not measured: rule lists come from the plan, `axeVersion` is a placeholder. | M3 `scripts/probe-engine.ts` at activation, then freeze and record its sha256. |
 | M1-11 | Dev server / entry | `index.html` points at `src/app/main.tsx` (M7); `npm run dev`/`build` cannot work before M7. Dev-server host port not set (claim via agent-ports at activation). | After M7: `npm run build`; claim a port before `npm run dev`. |
 | M1-12 | Scripts | `package.json` scripts `demo`, `eval`, `gen-fixtures`, `fetch-act`, `sync-edge`, `probe-engine` point at files that land in M3-M6. | Present after their milestones; run at activation. |
+
+## M2 - HTML source core
+
+Construction: 0570_Codex_GPT-61Sol_Sub_S28-CoderM2, 2026-10-24. Inherited source retained; backups are outside the product repo at
+`../agentops/handoffs/CLAUDE-INT-RECONSTRUCTED-20261024/backups/` (original paths plus `.bak`). No dependency installation or runtime execution occurred.
+
+Actual static check (passed: **12 files, 0 failures, 0 skips**):
+
+```
+node --experimental-vm-modules --no-warnings scripts/check-syntax.mjs src/core/html src/core/ops/resolve.ts src/core/ops/apply.ts tests/unit/parse.test.ts tests/unit/patch.test.ts tests/unit/resolve.test.ts tests/unit/renderCopy.test.ts tests/unit/invariants.test.ts tests/property/htmlOps.test.ts
+```
+
+This compiled stripped source without linking/evaluating; it was not a type check or test run. Focused source review used merged PLAN
+sections 2.2/2.4 and CL sections 2.4/2.5/2.6/5.1. M2 adds no measured accessibility claim.
+
+| # | Component | Assumption / skipped check | Activation step |
+|---|---|---|---|
+| M2-1 | parse5 integration | The structural parse5 tree view, source locations, recovery-clone behavior, template walk, end-tag matching, and 1-based editor citations are source-reviewed assumptions. BOM is removed only from the parse view; offsets include `bomDelta`, columns exclude the BOM. | After pin/install, run `tests/unit/parse.test.ts` on the selected parse5 version; reconcile any real clone-location difference without weakening anchor ambiguity refusal. |
+| M2-2 | Patch/resolve units | `tests/unit/{patch,resolve}.test.ts` written, not run: quoting/escaping, unquoted and `/>` boundaries, duplicate attrs, merged body attrs, styles, overlap refusal, title fill/insert/refuse, matching heading end tags, tabindex focusability, and unique non-self ID references. Filling a title also requires explicit `<head>`/`</head>` and a title directly under that head; ambiguous metadata abstains. | Run both suites, then typecheck/lint. Confirm parser offsets against BOM + non-ASCII/astral title and attribute repairs. |
+| M2-3 | Ordinal property | `tests/property/htmlOps.test.ts` written, not run. Fourteen case families cover every allowed op kind and `set_attr` name; assert unchanged unedited source slices, exact replacements, BOM, source ordinal identity/order, namespace/parent/template membership, known-delta offsets, retag exception, and exactly one optional title at ordinal n. | Run fast-check after pin/install; retain failing seeds and add a focused regression for any discovered issue. |
+| M2-4 | Invariant measurements | `tests/unit/invariants.test.ts` written, not run. The visible-text function conservatively compares normalized body text outside script/style/template/noscript, without layout/CSS visibility measurement. The shared interactive inventory preserves native classification, role, focusability/tab-order membership and handler names; disabled/inert/foreign/ambiguous controls cause undecidable focusability rather than unsafe tabindex removal. | Run units and malformed-page fixtures. Compare the inventory with the activated engines; document conservative abstentions. This is a structural invariant, not a complete browser accessibility model. |
+| M2-5 | Invariant provenance | Unit source covers unchanged duplicate IDs, new duplicate rejection, element removal/reorder, script/handler raw bytes, body text, forged delta metadata, edits outside resolved ranges, ineffective effects, title metadata and BOM tampering. Offset recomputation does not trust caller-supplied deltas; range ends use left affinity at empty head/title insertion boundaries. | Run invariant units and F5 properties; M3 must invoke `checkInvariants` on applied output and pass its result to strict gates. |
+| M2-6 | Audit render copy | `tests/unit/renderCopy.test.ts` written, not run: strips spoofed ordinal/unanchored markers (including templates), restores trusted source markers, handles unanchored nodes/title n, and confirms source output comes from offset patching. Input source attributes are preserved by source splicing; trusted render-only attributes are never copied back. Engine transform seam exists, but iframe resource/script stripping and its security properties are M7 work. | Run render-copy units; at M3 verify axe normalization reads markers only from the actual audited tree. At M7 add/run inert-strip properties and sandbox/runner checks. |
+| M2-7 | Downstream validation | No imports were linked, TypeScript types checked, tests executed, browser launched or audit engine run. Resolve consumes schema/value-validated typed ops; the M4 loop must perform shared schema, matrix and contextual value gates before resolution. | Run typecheck/lint plus all M2 unit/property suites after activation; integrate the M3/M4 loop before reporting any accepted fixes. |
+
+M2 r1 rework: 0604_Codex_GPT-61Sol_Sub_S28-Rework, 2026-10-24. `parseHtmlInteger` now removes leading zeroes before
+the existing 15-significant-digit magnitude bound, preserving positive/negative/zero classification and signed zero. Added focused
+sources in `tests/unit/{parse,resolve,invariants}.test.ts` for zero-prefixed positive/negative/zero values and large signed integers;
+resolver sources cover both repair ops and retain apply/invariant checks. Original versions of all five changed files were preserved
+beside the earlier backups with `.0604-before-rework.bak` suffixes. Focused syntax parsing passed **4 files, 0 failures, 0 skips**:
+
+```
+node --experimental-vm-modules --no-warnings scripts/check-syntax.mjs src/core/html/parse.ts tests/unit/parse.test.ts tests/unit/resolve.test.ts tests/unit/invariants.test.ts
+```
+
+The parser/resolver/inventory paths and backup-to-candidate diffs were source-reviewed. No imports were linked, types checked or
+tests executed. At activation, run these three unit sources and typecheck/lint; their expected behavior remains runtime-unverified.
