@@ -1,0 +1,56 @@
+{
+  "name": "accessibility-audit-fix",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Accessibility audit-and-fix verifier: axe-core audit, whitelisted JSON fix ops, whole-page re-audit, code gate.",
+  "license": "MIT",
+  "//": [
+    "Every dependency version below is a placeholder (0.0.0-PIN-AT-ACTIVATION), not a verified pin.",
+    "Exact versions are chosen and pinned (with a committed lockfile) at activation; npm install fails until then.",
+    "TypeScript must be >= 5.8 (erasableSyntaxOnly). ESLint must be >= 9 (flat config). Node verified for check-syntax: v24.18.0."
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run typecheck && vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "demo": "tsx scripts/demo.ts",
+    "eval": "tsx scripts/eval.ts",
+    "gen-fixtures": "tsx scripts/gen-fixtures.ts",
+    "fetch-act": "tsx scripts/fetch-act.ts",
+    "sync-edge": "tsx scripts/sync-edge-copies.ts",
+    "probe-engine": "tsx scripts/probe-engine.ts",
+    "check-syntax": "node --experimental-vm-modules --no-warnings scripts/check-syntax.mjs src scripts tests"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "0.0.0-PIN-AT-ACTIVATION",
+    "axe-core": "0.0.0-PIN-AT-ACTIVATION",
+    "diff": "0.0.0-PIN-AT-ACTIVATION",
+    "parse5": "0.0.0-PIN-AT-ACTIVATION",
+    "react": "0.0.0-PIN-AT-ACTIVATION",
+    "react-dom": "0.0.0-PIN-AT-ACTIVATION",
+    "zod": "0.0.0-PIN-AT-ACTIVATION"
+  },
+  "devDependencies": {
+    "@eslint/js": "0.0.0-PIN-AT-ACTIVATION",
+    "@types/jsdom": "0.0.0-PIN-AT-ACTIVATION",
+    "@types/node": "0.0.0-PIN-AT-ACTIVATION",
+    "@types/react": "0.0.0-PIN-AT-ACTIVATION",
+    "@types/react-dom": "0.0.0-PIN-AT-ACTIVATION",
+    "@vitejs/plugin-react": "0.0.0-PIN-AT-ACTIVATION",
+    "eslint": "0.0.0-PIN-AT-ACTIVATION",
+    "fast-check": "0.0.0-PIN-AT-ACTIVATION",
+    "globals": "0.0.0-PIN-AT-ACTIVATION",
+    "jsdom": "0.0.0-PIN-AT-ACTIVATION",
+    "tsx": "0.0.0-PIN-AT-ACTIVATION",
+    "typescript": "0.0.0-PIN-AT-ACTIVATION",
+    "typescript-eslint": "0.0.0-PIN-AT-ACTIVATION",
+    "vite": "0.0.0-PIN-AT-ACTIVATION",
+    "vitest": "0.0.0-PIN-AT-ACTIVATION"
+  }
+}

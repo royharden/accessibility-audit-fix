@@ -1,0 +1,64 @@
+{
+  "$comment": "DECLARED, NOT MEASURED (Dirty Mode). Written by hand in M1 from PLAN.md 2.5 / CL 2.7. scripts/probe-engine.ts (M3) measures which rules run reliably under each engine at activation, then this file is frozen and its sha256 is recorded in every report. No axe-core version has been installed or pinned yet.",
+  "schemaVersion": 1,
+  "status": "declared_not_measured",
+  "axeVersion": "0.0.0-PIN-AT-ACTIVATION",
+  "eligibleRules": [
+    "html-has-lang",
+    "document-title",
+    "image-alt",
+    "button-name",
+    "link-name",
+    "label",
+    "frame-title",
+    "heading-order",
+    "tabindex",
+    "color-contrast"
+  ],
+  "engines": {
+    "jsdom": {
+      "profileId": "jsdom-declared-v1",
+      "runner": "jsdom runScripts=outside-only, no resource loader, axe injected via window.eval",
+      "ruleSet": "axe default rules + explicitly enabled extra rules - excludedRules",
+      "resultTypes": ["violations", "incomplete"],
+      "enabledExtraRules": ["label-content-name-mismatch"],
+      "excludedRules": ["color-contrast"],
+      "notMeasuredRules": ["color-contrast", "label-content-name-mismatch"],
+      "measuredEligibleRules": [
+        "html-has-lang",
+        "document-title",
+        "image-alt",
+        "button-name",
+        "link-name",
+        "label",
+        "frame-title",
+        "heading-order",
+        "tabindex"
+      ],
+      "timeoutMs": 10000
+    },
+    "iframe": {
+      "profileId": "iframe-stripped-srcdoc-declared-v1",
+      "runner": "sandbox=allow-scripts srcdoc (no allow-same-origin), CSP meta with nonce, stripped render copy, postMessage",
+      "renderProfile": "stripped render copy: no page scripts, handlers, external resources or external CSS; inert frames kept",
+      "ruleSet": "axe default rules + explicitly enabled extra rules - excludedRules",
+      "resultTypes": ["violations", "incomplete"],
+      "enabledExtraRules": ["label-content-name-mismatch"],
+      "excludedRules": [],
+      "notMeasuredRules": [],
+      "measuredEligibleRules": [
+        "html-has-lang",
+        "document-title",
+        "image-alt",
+        "button-name",
+        "link-name",
+        "label",
+        "frame-title",
+        "heading-order",
+        "tabindex",
+        "color-contrast"
+      ],
+      "timeoutMs": 15000
+    }
+  }
+}
