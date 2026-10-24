@@ -53,12 +53,13 @@ interface SubsetCheck {
   readonly inconclusive: boolean;
   readonly reasons: readonly string[];
   readonly text: string | null;
+  readonly rendered: string | null;
   readonly after: AuditResult | null;
   readonly invariants: InvariantResult | null;
   readonly gates: readonly GateResult[];
 }
 export type CombineResult =
-  | { readonly state: "ready"; readonly text: string; readonly after: AuditResult; readonly invariants: InvariantResult;
+  | { readonly state: "ready"; readonly text: string; readonly rendered: string; readonly after: AuditResult; readonly invariants: InvariantResult;
       readonly includedIds: readonly string[]; readonly gates: readonly GateResult[] }
   | { readonly state: "blocked"; readonly reasons: readonly string[]; readonly conflicts: readonly (readonly [string, string])[];
       readonly diagnostics: readonly CombineDiagnostic[]; readonly after: AuditResult | null };
@@ -73,17 +74,18 @@ function description(fixes: readonly CombineFix[]): PatchDescription {
 async function checkSubset(input: CombineInput, fixes: readonly CombineFix[]): Promise<SubsetCheck> {
   const patch = description(fixes);
   const applied = applyEdits(input.page.original, patch.edits);
-  if (!applied.ok) return { ok: false, inconclusive: false, reasons: [applied.reason], text: null, after: null, invariants: null, gates: [] };
+  if (!applied.ok) return { ok: false, inconclusive: false, reasons: [applied.reason], text: null, rendered: null, after: null, invariants: null, gates: [] };
   const invariants = checkInvariants(input.page, patch, applied);
   let after: AuditResult;
-  try { after = await input.engine.audit(input.render(applied.text, applied.insertedTitleStart)); }
-  catch { return { ok: false, inconclusive: true, reasons: ["combined_audit_error"], text: null, after: null, invariants, gates: [] }; }
+  let rendered: string;
+  try { rendered = input.render(applied.text, applied.insertedTitleStart); after = await input.engine.audit(rendered); }
+  catch { return { ok: false, inconclusive: true, reasons: ["combined_audit_error"], text: null, rendered: null, after: null, invariants, gates: [] }; }
   const names = changedNameOrdinals(fixes.map((f) => f.resolved));
   const gates = fixes.map((f) => strictGate({ baseline: input.baseline, after, invariants, changedNames: names,
     target: { rule: f.resolved.rule, ordinal: f.resolved.ordinal,
       fingerprint: formatFingerprint(f.resolved.rule, f.resolved.ordinal), unmappedReason: null } }));
   return { ok: gates.every((g) => g.accepted === true), inconclusive: gates.some((g) => g.state === "inconclusive"),
-    reasons: [...new Set(gates.flatMap((g) => g.reasons))], text: applied.text, after, invariants, gates };
+    reasons: [...new Set(gates.flatMap((g) => g.reasons))], text: applied.text, rendered, after, invariants, gates };
 }
 
 /** Diagnostic bisection only. Never exports successful halves or claims a minimal conflict without measuring it. */
@@ -144,8 +146,8 @@ export async function combineFixes(input: CombineInput): Promise<CombineResult> 
   }
   if (conflicts.length > 0) return blocked(["overlapping_ranges"], conflicts);
   const full = await checkSubset(input, fixes);
-  if (full.ok && full.text !== null && full.after !== null && full.invariants !== null) {
-    return { state: "ready", text: full.text, after: full.after, invariants: full.invariants,
+  if (full.ok && full.text !== null && full.rendered !== null && full.after !== null && full.invariants !== null) {
+    return { state: "ready", text: full.text, rendered: full.rendered, after: full.after, invariants: full.invariants,
       includedIds: fixes.map((f) => f.id), gates: full.gates };
   }
   return { state: "blocked", reasons: full.reasons, conflicts: [], diagnostics: await diagnose(input, fixes, full), after: full.after };

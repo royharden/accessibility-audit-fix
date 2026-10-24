@@ -1,0 +1,19 @@
+{
+  "what_bug_this_catches": "Repairing one heading can introduce a skipped level at the next heading; the whole-page regression gate must catch ordinal 6.",
+  "target": {
+    "rule": "heading-order",
+    "ordinal": 5
+  },
+  "oracle": {
+    "correct": false,
+    "reason": "The scripted proposal is not a correct repair."
+  },
+  "engines": {
+    "jsdom": {
+      "state": "rejected"
+    },
+    "iframe": {
+      "state": "rejected"
+    }
+  }
+}

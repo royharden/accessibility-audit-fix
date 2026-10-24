@@ -1,0 +1,7 @@
+{
+  "what_bug_this_catches": "A plausible replayed image-alt proposal still crosses the canonical schema/value/gate path and needs human review.",
+  "fingerprint": "image-alt:4",
+  "attempts": [
+    { "kind": "ops", "ops": [{ "op": "set_attr", "fingerprint": "image-alt:4", "name": "alt", "value": "Sunrise over a mountain lake" }] }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "what_bug_this_catches": "An implied html element has no source start tag. A fabricated ordinal must not authorize a patch.",
+  "target": {
+    "rule": "html-has-lang",
+    "ordinal": null
+  },
+  "oracle": {
+    "correct": false,
+    "reason": "The scripted proposal is not a correct repair."
+  },
+  "engines": {
+    "jsdom": {
+      "state": "needs_human",
+      "reasonIncludes": [
+        "implied_element"
+      ]
+    },
+    "iframe": {
+      "state": "needs_human",
+      "reasonIncludes": [
+        "implied_element"
+      ]
+    }
+  }
+}

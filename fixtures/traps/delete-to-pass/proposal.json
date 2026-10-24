@@ -1,0 +1,14 @@
+{
+  "fingerprint": "image-alt:4",
+  "attempts": [
+    {
+      "kind": "ops",
+      "ops": [
+        {
+          "op": "delete_element",
+          "fingerprint": "image-alt:4"
+        }
+      ]
+    }
+  ]
+}

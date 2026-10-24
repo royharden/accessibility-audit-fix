@@ -1,0 +1,16 @@
+{
+  "fingerprint": "button-name:4",
+  "attempts": [
+    {
+      "kind": "ops",
+      "ops": [
+        {
+          "op": "set_attr",
+          "fingerprint": "button-name:4",
+          "name": "aria-label",
+          "value": "button"
+        }
+      ]
+    }
+  ]
+}

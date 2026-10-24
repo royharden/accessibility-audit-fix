@@ -1,0 +1,19 @@
+{
+  "what_bug_this_catches": "The one permitted title insertion must retain every original ordinal and preserve original source outside the insertion.",
+  "target": {
+    "rule": "document-title",
+    "ordinal": 0
+  },
+  "oracle": {
+    "correct": true,
+    "reason": "The title accurately describes the Storefront page."
+  },
+  "engines": {
+    "jsdom": {
+      "state": "checked"
+    },
+    "iframe": {
+      "state": "checked"
+    }
+  }
+}

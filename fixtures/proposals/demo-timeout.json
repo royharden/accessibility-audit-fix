@@ -1,0 +1,7 @@
+{
+  "what_bug_this_catches": "A scripted replay timeout must be inconclusive, with no provider call or fabricated audit result.",
+  "fingerprint": "image-alt:4",
+  "attempts": [
+    { "kind": "timeout" }
+  ]
+}

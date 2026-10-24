@@ -1,0 +1,20 @@
+{
+  "what_bug_this_catches": "Source ordinals must distinguish identical sibling elements and patch only the second sibling.",
+  "target": {
+    "rule": "image-alt",
+    "ordinal": 5
+  },
+  "oracle": {
+    "correct": true,
+    "reason": "The second image depicts a sunrise over a mountain lake; the first remains an unrelated pre-existing finding."
+  },
+  "engines": {
+    "jsdom": {
+      "state": "checked",
+      "nameCheck": "skipped_not_measured"
+    },
+    "iframe": {
+      "state": "checked"
+    }
+  }
+}

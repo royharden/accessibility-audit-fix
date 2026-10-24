@@ -1,0 +1,20 @@
+{
+  "what_bug_this_catches": "Parse recovery and formatting clones elsewhere must not make source offsets drift or cause whole-AST serialization.",
+  "target": {
+    "rule": "image-alt",
+    "ordinal": 4
+  },
+  "oracle": {
+    "correct": true,
+    "reason": "Only the explicitly anchored image start tag changes; malformed source bytes elsewhere stay untouched."
+  },
+  "engines": {
+    "jsdom": {
+      "state": "checked",
+      "nameCheck": "skipped_not_measured"
+    },
+    "iframe": {
+      "state": "checked"
+    }
+  }
+}

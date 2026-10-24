@@ -1,0 +1,19 @@
+{
+  "what_bug_this_catches": "Hiding an inaccessible element is outside the rule-op whitelist and must not count as repair.",
+  "target": {
+    "rule": "image-alt",
+    "ordinal": 4
+  },
+  "oracle": {
+    "correct": false,
+    "reason": "The scripted proposal is not a correct repair."
+  },
+  "engines": {
+    "jsdom": {
+      "state": "rejected"
+    },
+    "iframe": {
+      "state": "rejected"
+    }
+  }
+}

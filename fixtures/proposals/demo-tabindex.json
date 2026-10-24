@@ -1,0 +1,7 @@
+{
+  "what_bug_this_catches": "The offline demo must load a fingerprint-bound positive tabindex repair from replay JSON.",
+  "fingerprint": "tabindex:4",
+  "attempts": [
+    { "kind": "ops", "ops": [{ "op": "set_attr", "fingerprint": "tabindex:4", "name": "tabindex", "value": "0" }] }
+  ]
+}

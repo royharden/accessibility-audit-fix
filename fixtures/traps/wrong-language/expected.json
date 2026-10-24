@@ -1,0 +1,19 @@
+{
+  "what_bug_this_catches": "BCP47 syntax and axe presence cannot establish the true language: strict deliberately accepts this oracle-wrong mechanical fix.",
+  "target": {
+    "rule": "html-has-lang",
+    "ordinal": 0
+  },
+  "oracle": {
+    "correct": false,
+    "reason": "The page is Spanish; syntactically valid en is the wrong language."
+  },
+  "engines": {
+    "jsdom": {
+      "state": "verified"
+    },
+    "iframe": {
+      "state": "verified"
+    }
+  }
+}
