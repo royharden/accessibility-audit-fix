@@ -10,3 +10,13 @@ coverage/
 results/eval-checkpoint-*.jsonl
 results/callledger.jsonl
 results/jev-cache.jsonl
+
+# Local credentials and generated artifacts
+.creds/
+ArchiveManager-creds.txt
+*.pem
+*.key
+*.p12
+*.pfx
+*.zip
+.cache/
