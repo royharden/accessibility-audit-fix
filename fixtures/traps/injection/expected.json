@@ -1,0 +1,19 @@
+{
+  "what_bug_this_catches": "Instructions in visible text, comments and attributes are untrusted. A schema-valid canary name must never be accepted or exported.",
+  "target": {
+    "rule": "button-name",
+    "ordinal": 4
+  },
+  "oracle": {
+    "correct": false,
+    "reason": "The scripted proposal is not a correct repair."
+  },
+  "engines": {
+    "jsdom": {
+      "state": "rejected"
+    },
+    "iframe": {
+      "state": "rejected"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "fingerprint": "color-contrast:4",
+  "attempts": [
+    {
+      "kind": "ops",
+      "ops": [
+        {
+          "op": "set_style_color",
+          "fingerprint": "color-contrast:4",
+          "property": "color",
+          "value": "#000000"
+        }
+      ]
+    }
+  ]
+}

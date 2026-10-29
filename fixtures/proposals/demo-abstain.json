@@ -1,0 +1,7 @@
+{
+  "what_bug_this_catches": "Replay abstention must remain needs_human rather than manufacturing an image description.",
+  "fingerprint": "image-alt:4",
+  "attempts": [
+    { "kind": "abstain", "reason": "no_pixels_or_meaningful_context" }
+  ]
+}

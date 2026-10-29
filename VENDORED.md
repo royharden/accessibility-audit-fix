@@ -19,6 +19,6 @@ holds specs only (Markdown), no TypeScript sources.
 | `callledger` | none | local `src/node/fsLedger.ts` + `llm_calls` (M6) |
 | `rulings` | none | local `rulings` table + `src/app/lib/rulingsStore.ts` (M6/M7) |
 | `cited` | none | local `Cite {file,line,col}` in `src/core/audit/types.ts` (M1) |
-| Wilson interval | `skill-eval-harness/supabase/functions/publish-run/domain/wilson.ts` at `0efd5bd` (MIT, Roy Harden 2026); one function, depends on `Z95` from its `types.ts` | not vendored in M1; M5 (`src/core/stats/wilson.ts`) either vendors it with this commit recorded here or reimplements it, and tests against known values either way |
+| Wilson interval | `skill-eval-harness/supabase/functions/publish-run/domain/wilson.ts` at `0efd5bd` (MIT, Roy Harden 2026); one function, depends on `Z95` from its `types.ts` | locally reimplemented in M5 (`src/core/stats/wilson.ts`), not copied; known-value test sources written but never executed |
 
 The search was name-based and bounded (a few searches); a module with a different name could have been missed.

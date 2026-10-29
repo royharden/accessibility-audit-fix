@@ -1,0 +1,15 @@
+{
+  "fingerprint": "document-title:0",
+  "attempts": [
+    {
+      "kind": "ops",
+      "ops": [
+        {
+          "op": "set_document_title",
+          "fingerprint": "document-title:0",
+          "text": "Storefront"
+        }
+      ]
+    }
+  ]
+}

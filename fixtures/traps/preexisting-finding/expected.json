@@ -1,0 +1,20 @@
+{
+  "what_bug_this_catches": "An unrelated pre-existing finding is not a new regression and must not reject a correct target repair.",
+  "target": {
+    "rule": "image-alt",
+    "ordinal": 4
+  },
+  "oracle": {
+    "correct": true,
+    "reason": "The target image receives meaningful alt; the separate forest image remains unchanged."
+  },
+  "engines": {
+    "jsdom": {
+      "state": "checked",
+      "nameCheck": "skipped_not_measured"
+    },
+    "iframe": {
+      "state": "checked"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "what_bug_this_catches": "aria-labelledby must resolve to existing unique ids; syntactic non-emptiness is insufficient.",
+  "target": {
+    "rule": "button-name",
+    "ordinal": 4
+  },
+  "oracle": {
+    "correct": false,
+    "reason": "The scripted proposal is not a correct repair."
+  },
+  "engines": {
+    "jsdom": {
+      "state": "rejected"
+    },
+    "iframe": {
+      "state": "rejected"
+    }
+  }
+}

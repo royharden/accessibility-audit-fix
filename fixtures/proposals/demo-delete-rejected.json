@@ -1,0 +1,7 @@
+{
+  "what_bug_this_catches": "Replay loading must preserve a forbidden operation as unknown JSON so the canonical schema visibly rejects it.",
+  "fingerprint": "image-alt:4",
+  "attempts": [
+    { "kind": "ops", "ops": [{ "op": "delete_element", "fingerprint": "image-alt:4" }] }
+  ]
+}

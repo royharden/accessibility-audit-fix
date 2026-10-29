@@ -41,6 +41,7 @@
       "profileId": "iframe-stripped-srcdoc-declared-v1",
       "runner": "sandbox=allow-scripts srcdoc (no allow-same-origin), CSP meta with nonce, stripped render copy, postMessage",
       "renderProfile": "stripped render copy: no page scripts, handlers, external resources or external CSS; inert frames kept",
+      "viewport": { "width": 1280, "height": 900 },
       "ruleSet": "axe default rules + explicitly enabled extra rules - excludedRules",
       "resultTypes": ["violations", "incomplete"],
       "enabledExtraRules": ["label-content-name-mismatch"],

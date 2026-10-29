@@ -1,0 +1,9 @@
+Accessibility Audit-and-Fix Verifier
+Own source: Copyright (c) 2026 Roy Harden. MIT; see LICENSE.
+
+No third-party source module is vendored. See VENDORED.md for the bounded inventory.
+axe-core is intended as an unmodified MPL-2.0 dependency. No dependencies have been
+installed or pinned; verify licenses and preserve required notices of the actual
+pinned distribution before publication. Other dependency licenses likewise remain
+an activation check. API wire adapters are local implementations informed by
+official documentation, not copied SDKs. No W3C ACT dataset is redistributed.

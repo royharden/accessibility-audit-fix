@@ -1,0 +1,16 @@
+{
+  "fingerprint": "image-alt:5",
+  "attempts": [
+    {
+      "kind": "ops",
+      "ops": [
+        {
+          "op": "set_attr",
+          "fingerprint": "image-alt:5",
+          "name": "alt",
+          "value": "Sunrise over a mountain lake"
+        }
+      ]
+    }
+  ]
+}

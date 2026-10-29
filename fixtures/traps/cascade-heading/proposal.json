@@ -1,0 +1,15 @@
+{
+  "fingerprint": "heading-order:5",
+  "attempts": [
+    {
+      "kind": "ops",
+      "ops": [
+        {
+          "op": "retag_heading",
+          "fingerprint": "heading-order:5",
+          "level": 2
+        }
+      ]
+    }
+  ]
+}

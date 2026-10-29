@@ -1,0 +1,16 @@
+{
+  "fingerprint": "html-has-lang:0",
+  "attempts": [
+    {
+      "kind": "ops",
+      "ops": [
+        {
+          "op": "set_attr",
+          "fingerprint": "html-has-lang:0",
+          "name": "lang",
+          "value": "en"
+        }
+      ]
+    }
+  ]
+}
